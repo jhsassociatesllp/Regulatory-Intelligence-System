@@ -1,0 +1,37 @@
+name: 📰 Daily Regulatory News Script
+
+on:
+  schedule:
+    - cron: "50 12 * * *"   # Runs daily at 10:00 AM IST (04:30 UTC)
+  workflow_dispatch:        # (optional) lets you run manually too
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run daily script
+        env:
+          SERPAPI_KEY1: ${{ secrets.SERPAPI_KEY1 }}
+          SERPAPI_KEY2: ${{ secrets.SERPAPI_KEY2 }}
+          SERPAPI_KEY3: ${{ secrets.SERPAPI_KEY3 }}
+          SERPAPI_KEY4: ${{ secrets.SERPAPI_KEY4 }}
+          DIFFBOT_TOKEN1: ${{ secrets.DIFFBOT_TOKEN1 }}
+          DIFFBOT_TOKEN2: ${{ secrets.DIFFBOT_TOKEN2 }}
+          DIFFBOT_TOKEN3: ${{ secrets.DIFFBOT_TOKEN3 }}
+          SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+        run: python regulatory_news_daily.py

@@ -1,0 +1,16 @@
+requests
+newspaper3k
+lxml
+trafilatura
+PyMuPDF
+fitz
+langchain 
+langchain-openai
+langchain-community
+duckduckgo-search
+openai
+ddgs
+google-search-results
+langchain[experimental] 
+playwright
+selenium
