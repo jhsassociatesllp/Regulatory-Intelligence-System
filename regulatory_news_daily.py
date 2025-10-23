@@ -10,7 +10,6 @@ import smtplib
 import json
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import win32com.client as win32
 
 load_dotenv()
 
