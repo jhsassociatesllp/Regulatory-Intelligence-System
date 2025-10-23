@@ -18,42 +18,42 @@ load_dotenv()
 # # -----------------------
 # Function: Send results via Outlook mail
 # -----------------------
-def send_email_via_outlook(json_file, recipient, subject="Daily Regulatory News Summary"):
-    try:
-        # Load JSON results
-        with open(json_file, "r", encoding="utf-8") as f:
-            data = json.load(f)
+# def send_email_via_outlook(json_file, recipient, subject="Daily Regulatory News Summary"):
+#     try:
+#         # Load JSON results
+#         with open(json_file, "r", encoding="utf-8") as f:
+#             data = json.load(f)
 
-        # Format email body in Markdown-style (but Outlook uses HTML, so we convert)
-        body = "<h2>📢 Daily Regulatory News Summary</h2>"
-        for pair, articles in data.items():
-            body += f"<h3>🔎 Keywords: {pair.replace('_', ' & ')}</h3><ul>"
-            for art in articles:
-                headline = art.get("headline", "No title")
-                url = art.get("url", "#")
-                site = art.get("site_name", "Unknown Source")
-                content = art.get("content", "")
+#         # Format email body in Markdown-style (but Outlook uses HTML, so we convert)
+#         body = "<h2>📢 Daily Regulatory News Summary</h2>"
+#         for pair, articles in data.items():
+#             body += f"<h3>🔎 Keywords: {pair.replace('_', ' & ')}</h3><ul>"
+#             for art in articles:
+#                 headline = art.get("headline", "No title")
+#                 url = art.get("url", "#")
+#                 site = art.get("site_name", "Unknown Source")
+#                 content = art.get("content", "")
 
-                body += f"""
-                <li>
-                    <b>{headline}</b><br>
-                    <i><a href="{url}">{site}</a></i><br>
-                    <p>{content[:300]}...</p>
-                </li>
-                """
-            body += "</ul><hr>"
+#                 body += f"""
+#                 <li>
+#                     <b>{headline}</b><br>
+#                     <i><a href="{url}">{site}</a></i><br>
+#                     <p>{content[:300]}...</p>
+#                 </li>
+#                 """
+#             body += "</ul><hr>"
 
-        # Connect to Outlook
-        outlook = win32.Dispatch("Outlook.Application")
-        mail = outlook.CreateItem(0)
-        mail.To = recipient
-        mail.Subject = subject
-        mail.HTMLBody = body
-        mail.Send()
+#         # Connect to Outlook
+#         outlook = win32.Dispatch("Outlook.Application")
+#         mail = outlook.CreateItem(0)
+#         mail.To = recipient
+#         mail.Subject = subject
+#         mail.HTMLBody = body
+#         mail.Send()
 
-        print(f"✅ Email sent to {recipient}")
-    except Exception as e:
-        print(f"[Email Error] {e}")
+#         print(f"✅ Email sent to {recipient}")
+#     except Exception as e:
+#         print(f"[Email Error] {e}")
 
 
 
@@ -272,20 +272,18 @@ def send_email_via_smtp(data, sender, app_password, recipient, subject="Daily Re
         
 
 if __name__ == "__main__":
-    print("🚀 Script started:", datetime.now())
-    main()
-    print("✅ Fetching done, sending email...")
-
-    try:
-        send_email_via_smtp(
-            json_file="filtered_news.json",
-            sender=os.getenv("SENDER_EMAIL"),
-            app_password=os.getenv("APP_PASSWORD"),
-            recipient=os.getenv("SENDER_EMAIL"),
-            subject="Daily Regulatory News - Summary"
-        )
-    except Exception as e:
-        print("❌ Email sending failed:", e)
-        raise  # <-- ensures GitHub Action marks it failed
-
-    print("🎉 Script completed successfully!")
+    data = main()
+    send_email_via_smtp(
+        # json_file="filtered_news.json",
+        data=data,
+        sender=os.getenv("SENDER_EMAIL"),        # <-- Your email
+        app_password=os.getenv("APP_PASSWORD"),     # <-- App password (not your normal password)
+        recipient=os.getenv("SENDER_EMAIL"),   # <-- Recipient email
+        subject="Daily Regulatory News - Summary"
+    )
+    # # Send email
+    # send_email_via_outlook(
+    #     json_file="filtered_news.json",
+    #     recipient="vasu.gadde@jhsassociates.in",   # <-- Change this
+    #     subject="Daily Regulatory News - Summary"
+    # )
