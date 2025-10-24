@@ -61,11 +61,11 @@ load_dotenv()
 # Configuration
 # -----------------------
 KEYWORDS = [
-    "regulation", "compliance"
-    # "regulation", "compliance", "SEBI", "RBI", "audit", "regulatory", "FEMA", "tax", "GST",
-    # "statutory", "law", "legal", "enforcement", "guideline", "notification", "amendment",
-    # "disclosure", "reporting", "KYC", "AML", "insider trading", "corporate governance",
-    # "penalty", "IRDA", "NFRA", "ICAI", "FDI", "income tax"
+    # "regulation", "compliance"
+    "regulation", "compliance", "SEBI", "RBI", "audit", "regulatory", "FEMA", "tax", "GST",
+    "statutory", "law", "legal", "enforcement", "guideline", "notification", "amendment",
+    "disclosure", "reporting", "KYC", "AML", "insider trading", "corporate governance",
+    "penalty", "IRDA", "NFRA", "ICAI", "FDI", "income tax"
 ]
 
 SERP_API_KEYS = [
