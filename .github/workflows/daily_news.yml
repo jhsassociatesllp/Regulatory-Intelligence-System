@@ -2,7 +2,7 @@ name: 📰 Daily Regulatory News Script
 
 on:
   schedule:
-    - cron: "50 3 * * *"   # Runs daily at 10:00 AM IST (03:50 UTC)
+    - cron: "30 4 * * *"   # Runs daily at 10:00 AM IST (03:50 UTC)
   workflow_dispatch:        # (optional) lets you run manually too
 
 jobs:
