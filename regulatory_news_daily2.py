@@ -1,6 +1,6 @@
 import requests
 import trafilatura
-from datetime import datetime, timedelta
+from datetime import datetime
 import pytz
 import time
 import json
@@ -15,13 +15,21 @@ load_dotenv()
 # -----------------------
 # Configuration
 # -----------------------
+
 BASE_KEYWORDS = [
     "regulation", "compliance"
-    # Add more later if needed
+    # "regulation", "compliance", "SEBI", "RBI", "audit", "regulatory", "FEMA", "tax", "GST",
+    # "statutory", "law", "legal", "enforcement", "guideline", "notification", "amendment",
+    # "disclosure", "reporting", "KYC", "AML", "insider trading", "corporate governance",
+    # "penalty", "IRDA", "NFRA", "ICAI", "FDI", "income tax"
 ]
+
 NEW_MEMBER_EXTRA_KEYWORDS = [
     "fraud", "case"
+    # "fraud", "case", "scam", "concession", "waiver", "relief", "exemption", 
+    # "violation", "breach", "investigation", "probe", "lawsuit", "litigation"
 ]
+
 KEYWORDS_NEW_MEMBER = BASE_KEYWORDS + NEW_MEMBER_EXTRA_KEYWORDS
 
 SERP_API_KEYS = [
@@ -37,6 +45,7 @@ DIFFBOT_KEYS = [
     os.getenv("DIFFBOT_TOKEN2"),
     os.getenv("DIFFBOT_TOKEN3")
 ]
+
 
 # -----------------------
 # Helper: Fetch content
@@ -58,8 +67,10 @@ def fetch_diffbot_content(url, token, max_retries=3, sleep_seconds=5):
             api_url = f"https://api.diffbot.com/v3/article?url={url}&token={token}"
             response = requests.get(api_url, timeout=15)
             data = response.json()
+
             if "objects" not in data or not data["objects"]:
                 return None
+
             article = data["objects"][0]
             return {
                 "headline": article.get("title"),
@@ -68,31 +79,33 @@ def fetch_diffbot_content(url, token, max_retries=3, sleep_seconds=5):
                 "content": article.get("text"),
                 "url": article.get("pageUrl"),
             }
+
         except Exception as e:
             print(f"[Diffbot Error] Attempt {attempt + 1}: {e}")
             time.sleep(sleep_seconds)
+
     return None
 
 
 # -----------------------
-# Fetch SerpAPI News with Custom Date & Time Filtering
+# Fetch SerpAPI News
 # -----------------------
 def fetch_serpapi_news(
     query,
     serp_keys,
     diffbot_keys,
-    time_filter_mode="today_7_to_10",  # or "yesterday_7am_to_7pm" or None (all today)
+    filter_start_hour=None,
+    filter_end_hour=None,
     max_retries=3,
     sleep_seconds=5,
 ):
     ist = pytz.timezone("Asia/Kolkata")
     results = []
+
     serp_index = 0
     diffbot_index = 0
 
     url = "https://serpapi.com/search"
-    
-    # Base query with sites
     params_base = {
         "engine": "google_news",
         "q": (
@@ -101,67 +114,35 @@ def fetch_serpapi_news(
             "OR site:financialexpress.com "
             f"{query}"
         ),
-        "hl": "en",
-        "gl": "in",
+        "tbs": "qdr:d"
     }
-
-    # Set date range based on mode
-    if time_filter_mode == "today_7_to_10":
-        params_base["tbs"] = "qdr:d"  # today only
-    elif time_filter_mode == "yesterday_7am_to_7pm":
-        # SerpAPI qdr:d = past 24 hours → we will filter manually below
-        params_base["tbs"] = "qdr:d2"  # past 2 days to be safe
-    else:
-        params_base["tbs"] = "qdr:d"
 
     for attempt in range(max_retries):
         serp_key = serp_keys[serp_index % len(serp_keys)]
         params = {**params_base, "api_key": serp_key}
 
         try:
-            response = requests.get(url, params=params, timeout=20)
+            response = requests.get(url, params=params, timeout=15)
             data = response.json()
 
-            if "news_results" not in data:
-                print("[SerpAPI] No news_results in response")
-                break
-
-            for item in data["news_results"]:
+            for item in data.get("news_results", []):
                 link = item.get("link")
-                title = item.get("title")
-                source_name = item.get("source", {}).get("name")
                 date_str = item.get("date")
 
-                if not link or not date_str:
-                    continue
-
-                # Parse published date
+                # Parse date
                 try:
-                    # Format: "12/08/2025, 03:30 pm, +0000 UTC" or similar
-                    pub_dt = datetime.strptime(date_str.split(", +0000 UTC")[0], "%m/%d/%Y, %I:%M %p")
+                    pub_dt = datetime.strptime(date_str, "%m/%d/%Y, %I:%M %p, +0000 UTC")
                     pub_dt = pub_dt.replace(tzinfo=pytz.UTC).astimezone(ist)
-                except Exception as e:
-                    print(f"[Date Parse Error] {date_str} -> {e}")
+                except:
                     continue
 
-                now_ist = datetime.now(ist)
-
-                # === Time Filtering Logic ===
-                if time_filter_mode == "today_7_to_10":
-                    if pub_dt.date() != now_ist.date():
-                        continue
-                    if not (7 <= pub_dt.hour < 10):
+                # Apply time window if needed
+                if filter_start_hour is not None:
+                    if not (filter_start_hour <= pub_dt.hour < filter_end_hour):
                         continue
 
-                elif time_filter_mode == "yesterday_7am_to_7pm":
-                    yesterday = (now_ist - timedelta(days=1)).date()
-                    if pub_dt.date() != yesterday:
-                        continue
-                    if not (7 <= pub_dt.hour < 19):  # 7 AM to 7 PM
-                        continue
-
-                # === Fetch Content ===
                 content = fetch_article_content(link)
+
                 if not content:
                     diff_token = diffbot_keys[diffbot_index % len(diffbot_keys)]
                     diffbot_index += 1
@@ -170,19 +151,16 @@ def fetch_serpapi_news(
                         results.append(diff_data)
                         time.sleep(sleep_seconds)
                         continue
-                    else:
-                        continue  # skip if both fail
 
                 results.append({
-                    "headline": title,
-                    "author": None,
-                    "site_name": source_name,
+                    "headline": item.get("title"),
+                    "author": item.get("source", {}).get("name"),
+                    "site_name": item.get("source", {}).get("name"),
                     "content": content,
                     "url": link,
-                    "published_at": pub_dt.strftime("%Y-%m-%d %H:%M IST")
                 })
 
-            break  # success
+            break
 
         except Exception as e:
             print(f"[SerpAPI Error {attempt+1}] {e}")
@@ -195,23 +173,26 @@ def fetch_serpapi_news(
 # -----------------------
 # Fetch for keyword pairs
 # -----------------------
-def fetch_news_for_keywords(keywords, time_filter_mode):
+def fetch_news_for_keywords(keywords, filter_start_hour=None, filter_end_hour=None):
     all_results = {}
+
     for i in range(0, len(keywords) - 1, 2):
         k1 = keywords[i]
         k2 = keywords[i + 1]
         query = f"{k1} OR {k2}"
-        print(f"\nFetching news for: {k1}, {k2} | Mode: {time_filter_mode}")
-        
+
+        print(f"\nFetching news for: {k1}, {k2}")
+
         articles = fetch_serpapi_news(
-            query=query,
-            serp_keys=SERP_API_KEYS,
-            diffbot_keys=DIFFBOT_KEYS,
-            time_filter_mode=time_filter_mode,
+            query,
+            SERP_API_KEYS,
+            DIFFBOT_KEYS,
+            filter_start_hour,
+            filter_end_hour,
         )
-        
+
         all_results[f"{k1}_{k2}"] = articles
-        time.sleep(10)  # Avoid rate limits
+        time.sleep(10)
 
     return all_results
 
@@ -219,31 +200,62 @@ def fetch_news_for_keywords(keywords, time_filter_mode):
 # -----------------------
 # Email sender
 # -----------------------
+# def send_email(sender, password, recipient, subject, data):
+#     try:
+#         body = "<h2>📢 Daily Regulatory News Summary</h2>"
+
+#         for pair, articles in data.items():
+#             if not articles:
+#                 continue
+
+#             body += f"<h3>{pair.replace('_', ' & ')}</h3><ul>"
+
+#             for art in articles:
+#                 body += f"""
+#                 <li>
+#                     <b>{art.get('headline')}</b><br>
+#                     <a href="{art.get('url')}">{art.get('site_name')}</a><br>
+#                     <p>{(art.get('content') or '')[:300]}...</p>
+#                 </li>
+#                 """
+
+#             body += "</ul><hr>"
+
+#         msg = MIMEMultipart("alternative")
+#         msg["From"] = sender
+#         msg["To"] = recipient
+#         msg["Subject"] = subject
+#         msg.attach(MIMEText(body, "html"))
+
+#         with smtplib.SMTP("smtp.office365.com", 587) as server:
+#             server.starttls()
+#             server.login(sender, password)
+#             server.sendmail(sender, recipient, msg.as_string())
+
+#         print(f"✅ Email sent from {sender} → {recipient}")
+
+#     except Exception as e:
+#         print(f"[Email Error] {e}")
+
 def send_email(sender, password, recipient, subject, data):
     try:
-        body = "<h2>Daily Regulatory News Summary</h2><br>"
-        total_articles = sum(len(arts) for arts in data.values())
+        body = "<h2>📢 Daily Regulatory News Summary</h2>"
 
-        if total_articles == 0:
-            body += "<p><i>No relevant articles found in the specified time window.</i></p>"
-        else:
-            for pair, articles in data.items():
-                if not articles:
-                    continue
-                pair_name = pair.replace("_", " & ")
-                body += f"<h3>{pair_name}</h3><ul style='line-height: 1.6;'>"
-                for art in articles:
-                    snippet = (art.get('content') or '')[:320].replace('\n', ' ')
-                    if len(art.get('content') or '') > 320:
-                        snippet += "..."
-                    body += f"""
-                    <li>
-                        <b><a href="{art.get('url')}">{art.get('headline')}</a></b><br>
-                        <small>{art.get('site_name')} • {art.get('published_at', 'Recently')}</small><br>
-                        <p style="color:#444; margin:8px 0;">{snippet}</p>
-                    </li><br>
-                    """
-                body += "</ul><hr>"
+        for pair, articles in data.items():
+            if not articles:
+                continue
+
+            body += f"<h3>{pair.replace('_', ' & ')}</h3><ul>"
+
+            for art in articles:
+                body += f"""
+                <li>
+                    <b>{art.get('headline')}</b><br>
+                    <a href="{art.get('url')}">{art.get('site_name')}</a><br>
+                    <p>{(art.get('content') or '')[:300]}...</p>
+                </li>
+                """
+            body += "</ul><hr>"
 
         msg = MIMEMultipart("alternative")
         msg["From"] = sender
@@ -251,19 +263,23 @@ def send_email(sender, password, recipient, subject, data):
         msg["Subject"] = subject
         msg.attach(MIMEText(body, "html"))
 
-        # Auto-detect SMTP
+        # ------------------------
+        # SELECT SMTP BASED ON EMAIL
+        # ------------------------
         if sender.endswith("@gmail.com"):
             smtp_server = "smtp.gmail.com"
+            smtp_port = 587
         else:
             smtp_server = "smtp.office365.com"
-        smtp_port = 587
+            smtp_port = 587
 
         with smtplib.SMTP(smtp_server, smtp_port) as server:
             server.starttls()
             server.login(sender, password)
             server.sendmail(sender, recipient, msg.as_string())
 
-        print(f"Email sent: {sender} → {recipient} | {total_articles} articles")
+        print(f"✅ Email sent from {sender} → {recipient}")
+
     except Exception as e:
         print(f"[Email Error] {e}")
 
@@ -272,39 +288,46 @@ def send_email(sender, password, recipient, subject, data):
 # Main Runner
 # -----------------------
 def main():
-    ist_now = datetime.now(pytz.timezone("Asia/Kolkata"))
-    print(f"\nScript started at: {ist_now.strftime('%Y-%m-%d %H:%M:%S IST')}")
+    # Founder email credentials
+    FOUNDER_EMAIL = os.getenv("FOUNDER_EMAIL")
+    FOUNDER_APP_PASSWORD = os.getenv("FOUNDER_APP_PASSWORD")
 
-    # Founder: Today 7 AM – 10 AM IST
-    print("\n===== Founder Job (Today 07:00 – 10:00 IST)")
+    # New member email credentials
+    NEW_MEMBER_INPUT_EMAIL = os.getenv("NEW_MEMBER_INPUT_EMAIL")
+    NEW_MEMBER_OUTPUT_EMAIL = os.getenv("NEW_MEMBER_OUTPUT_EMAIL")
+    NEW_MEMBER_APP_PASSWORD = os.getenv("NEW_MEMBER_APP_PASSWORD")
+
+    # ---------------- Founder job ----------------
+    print("\n===== Founder Job (07:00–10:00) =====")
     founder_data = fetch_news_for_keywords(
-        keywords=BASE_KEYWORDS,
-        time_filter_mode="today_7_to_10"
+        BASE_KEYWORDS,
+        filter_start_hour=7,
+        filter_end_hour=10
     )
+
     send_email(
-        sender=os.getenv("FOUNDER_EMAIL"),
-        password=os.getenv("FOUNDER_APP_PASSWORD"),
-        recipient=os.getenv("FOUNDER_EMAIL"),
-        subject=f"Regulatory Update – {ist_now.strftime('%b %d')} (7–10 AM)",
+        sender=FOUNDER_EMAIL,
+        password=FOUNDER_APP_PASSWORD,
+        recipient=FOUNDER_EMAIL,
+        subject="Daily Regulatory News - Founder",
         data=founder_data,
     )
 
-    # New Member: Yesterday 7 AM – 7 PM IST
-    print("\n New Member Job (Yesterday 07:00 – 19:00 IST)")
+    # ---------------- New member job ----------------
+    print("\n===== New Member Job (Last 24 Hours) =====")
     new_member_data = fetch_news_for_keywords(
-        keywords=KEYWORDS_NEW_MEMBER,
-        time_filter_mode="yesterday_7am_to_7pm"
-    )
-    yesterday_str = (ist_now - timedelta(days=1)).strftime("%b %d")
-    send_email(
-        sender=os.getenv("NEW_MEMBER_INPUT_EMAIL"),
-        password=os.getenv("NEW_MEMBER_APP_PASSWORD"),
-        recipient=os.getenv("NEW_MEMBER_OUTPUT_EMAIL"),
-        subject=f"Regulatory & Fraud Alerts – {yesterday_str} (Full Day 7 AM – 7 PM)",
-        data=new_member_data,
+        KEYWORDS_NEW_MEMBER,
+        filter_start_hour=None,
+        filter_end_hour=None
     )
 
-    print("\nAll jobs completed.\n")
+    send_email(
+        sender=NEW_MEMBER_INPUT_EMAIL,
+        password=NEW_MEMBER_APP_PASSWORD,
+        recipient=NEW_MEMBER_OUTPUT_EMAIL,
+        subject="Daily Regulatory News - Expanded (24 Hours)",
+        data=new_member_data,
+    )
 
 
 if __name__ == "__main__":
