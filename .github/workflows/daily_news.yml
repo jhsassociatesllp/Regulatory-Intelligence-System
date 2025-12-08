@@ -2,7 +2,8 @@ name: 📰 Daily Regulatory News Script
 
 on:
   schedule:
-    - cron: "30 4 * * *"   # Runs daily at 10:00 AM IST (03:50 UTC)
+    # - cron: "30 4 * * *"   # Runs daily at 10:00 AM IST (03:50 UTC)
+    - cron: "50 16 * * *"
   workflow_dispatch:        # (optional) lets you run manually too
 
 jobs:
@@ -29,9 +30,14 @@ jobs:
           SERPAPI_KEY2: ${{ secrets.SERPAPI_KEY2 }}
           SERPAPI_KEY3: ${{ secrets.SERPAPI_KEY3 }}
           SERPAPI_KEY4: ${{ secrets.SERPAPI_KEY4 }}
+          SERPAPI_KEY5: ${{ secrets.SERPAPI_KEY5 }}
           DIFFBOT_TOKEN1: ${{ secrets.DIFFBOT_TOKEN1 }}
           DIFFBOT_TOKEN2: ${{ secrets.DIFFBOT_TOKEN2 }}
           DIFFBOT_TOKEN3: ${{ secrets.DIFFBOT_TOKEN3 }}
-          SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
-          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+          FOUNDER_EMAIL: ${{ secrets.FOUNDER_EMAIL }}
+          FOUNDER_APP_PASSWORD: ${{ secrets.FOUNDER_APP_PASSWORD }}
+          NEW_MEMBER_INPUT_EMAIL: ${{ secrets.NEW_MEMBER_INPUT_EMAIL }}
+          NEW_MEMBER_APP_PASSWORD: ${{ secrets.NEW_MEMBER_APP_PASSWORD }}
+          NEW_MEMBER_OUTPUT_EMAIL: ${{ secrets.NEW_MEMBER_OUTPUT_EMAIL }}
+
         run: python regulatory_news_daily.py
