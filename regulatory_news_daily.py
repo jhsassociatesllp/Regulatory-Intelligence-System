@@ -17,10 +17,14 @@ load_dotenv()
 # Configuration
 # -----------------------
 BASE_KEYWORDS = [
-    "regulation", "compliance"
+    "regulation", "compliance", "SEBI", "RBI", "audit", "regulatory", "FEMA", "tax", "GST",
+    "statutory", "law", "legal", "enforcement", "guideline", "notification", "amendment",
+    "disclosure", "reporting", "KYC", "AML", "insider trading", "corporate governance",
+    "penalty", "IRDA", "NFRA", "ICAI", "FDI", "income tax"
 ]
 NEW_MEMBER_EXTRA_KEYWORDS = [
-    "fraud", "case"
+    "fraud", "case", "scam", "concession", "waiver", "relief", "exemption", 
+    "violation", "breach", "investigation", "probe", "lawsuit", "litigation"
 ]
 KEYWORDS_NEW_MEMBER = BASE_KEYWORDS + NEW_MEMBER_EXTRA_KEYWORDS
 
