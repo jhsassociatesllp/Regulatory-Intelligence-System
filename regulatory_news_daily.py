@@ -130,7 +130,7 @@ def fetch_serpapi_news(
     # Set date range based on mode
     if time_filter_mode == "today_7_to_10":
         params_base["tbs"] = "qdr:d"  # today only
-    elif time_filter_mode == "yesterday_7am_to_7pm":
+    elif time_filter_mode == "yesterday_7am_to_12pm":
         # Use specific date range for yesterday
         now_ist = datetime.now(ist)
         yesterday = now_ist - timedelta(days=1)
@@ -208,10 +208,10 @@ def fetch_serpapi_news(
                 if time_filter_mode == "today_7_to_10":
                     if pub_dt.date() == now_ist.date() and 7 <= pub_dt.hour < 10:
                         keep_article = True
-                elif time_filter_mode == "yesterday_7am_to_7pm":
+                elif time_filter_mode == "yesterday_7am_to_12pm":
                     yesterday = now_ist - timedelta(days=1)
                     if (pub_dt.date() == yesterday.date() and 
-                        7 <= pub_dt.hour < 19):
+                        7 <= pub_dt.hour < 12):
                         keep_article = True
 
                 if not keep_article:
@@ -449,19 +449,19 @@ def main():
         time_window=founder_time_window
     )
 
-    # New Member: Yesterday 7 AM – 7 PM IST
+    # New Member: Yesterday 7 AM – 12 PM IST
     print("\n" + "="*60)
-    print("👤 NEW MEMBER BRIEFING: Yesterday 07:00 – 19:00 IST")
+    print("👤 NEW MEMBER BRIEFING: Yesterday 07:00 – 12:00 IST")
     print("="*60)
     
     yesterday = ist_now - timedelta(days=1)
     new_member_data = fetch_news_for_keywords(
         keywords=KEYWORDS_NEW_MEMBER,
-        time_filter_mode="yesterday_7am_to_7pm",
+        time_filter_mode="yesterday_7am_to_12pm",
         force_fresh=True  # Force fresh results
     )
-    
-    new_member_time_window = f"Yesterday • {yesterday.strftime('%b %d')} • 07:00–19:00 IST"
+
+    new_member_time_window = f"Yesterday • {yesterday.strftime('%b %d')} • 07:00–12:00 IST"
     send_email(
         sender=os.getenv("NEW_MEMBER_INPUT_EMAIL"),
         password=os.getenv("NEW_MEMBER_APP_PASSWORD"),
