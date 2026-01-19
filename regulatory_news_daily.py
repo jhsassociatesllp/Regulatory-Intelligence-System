@@ -17,14 +17,16 @@ load_dotenv()
 # Configuration
 # -----------------------
 BASE_KEYWORDS = [
-    "regulation", "compliance", "SEBI", "RBI", "audit", "regulatory", "FEMA", "tax", "GST",
-    "statutory", "law", "legal", "enforcement", "guideline", "notification", "amendment",
-    "disclosure", "reporting", "KYC", "AML", "insider trading", "corporate governance",
-    "penalty", "IRDA", "NFRA", "ICAI", "FDI", "income tax"
+    "regulation", "compliance"
+    # "regulation", "compliance", "SEBI", "RBI", "audit", "regulatory", "FEMA", "tax", "GST",
+    # "statutory", "law", "legal", "enforcement", "guideline", "notification", "amendment",
+    # "disclosure", "reporting", "KYC", "AML", "insider trading", "corporate governance",
+    # "penalty", "IRDA", "NFRA", "ICAI", "FDI", "income tax"
 ]
 NEW_MEMBER_EXTRA_KEYWORDS = [
-    "fraud", "case", "scam", "concession", "waiver", "relief", "exemption", 
-    "violation", "breach", "investigation", "probe", "lawsuit", "litigation"
+    "fraud", "case"
+    # "fraud", "case", "scam", "concession", "waiver", "relief", "exemption", 
+    # "violation", "breach", "investigation", "probe", "lawsuit", "litigation"
 ]
 KEYWORDS_NEW_MEMBER = BASE_KEYWORDS + NEW_MEMBER_EXTRA_KEYWORDS
 
@@ -33,7 +35,8 @@ SERP_API_KEYS = [
     os.getenv("SERPAPI_KEY2"),
     os.getenv("SERPAPI_KEY3"),
     os.getenv("SERPAPI_KEY4"),
-    os.getenv("SERPAPI_KEY5")
+    os.getenv("SERPAPI_KEY5"),
+    os.getenv("SERPAPI_KEY6")
 ]
 
 DIFFBOT_KEYS = [
