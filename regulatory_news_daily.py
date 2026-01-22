@@ -17,16 +17,16 @@ load_dotenv()
 # Configuration
 # -----------------------
 BASE_KEYWORDS = [
-    "regulation", "compliance"
-    # "regulation", "compliance", "SEBI", "RBI", "audit", "regulatory", "FEMA", "tax", "GST",
-    # "statutory", "law", "legal", "enforcement", "guideline", "notification", "amendment",
-    # "disclosure", "reporting", "KYC", "AML", "insider trading", "corporate governance",
-    # "penalty", "IRDA", "NFRA", "ICAI", "FDI", "income tax"
+    # "regulation", "compliance"
+    "regulation", "compliance", "SEBI", "RBI", "audit", "regulatory", "FEMA", "tax", "GST",
+    "statutory", "law", "legal", "enforcement", "guideline", "notification", "amendment",
+    "disclosure", "reporting", "KYC", "AML", "insider trading", "corporate governance",
+    "penalty", "IRDA", "NFRA", "ICAI", "FDI", "income tax"
 ]
 NEW_MEMBER_EXTRA_KEYWORDS = [
-    "fraud", "case"
-    # "fraud", "case", "scam", "concession", "waiver", "relief", "exemption", 
-    # "violation", "breach", "investigation", "probe", "lawsuit", "litigation"
+    # "fraud", "case"
+    "fraud", "case", "scam", "concession", "waiver", "relief", "exemption", 
+    "violation", "breach", "investigation", "probe", "lawsuit", "litigation"
 ]
 KEYWORDS_NEW_MEMBER = BASE_KEYWORDS + NEW_MEMBER_EXTRA_KEYWORDS
 
@@ -444,8 +444,8 @@ def main():
     
     founder_time_window = f"Today • {ist_now.strftime('%b %d')} • 07:00–10:00 IST"
     send_email(
-        sender=os.getenv("FOUNDER_EMAIL"),
-        password=os.getenv("FOUNDER_APP_PASSWORD"),
+        sender=os.getenv("NEW_MEMBER_INPUT_EMAIL"),
+        password=os.getenv("NEW_MEMBER_APP_PASSWORD"),
         recipient=os.getenv("FOUNDER_EMAIL"),
         subject=f"🚨 Regulatory Morning Brief | {ist_now.strftime('%b %d')}",
         data=founder_data,
